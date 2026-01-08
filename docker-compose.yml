@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stripe_shop}
+      POSTGRES_USER: ${POSTGRES_USER:-stripe_shop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stripe_shop_password}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-stripe_shop} -d ${POSTGRES_DB:-stripe_shop}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build: .
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS}
+      DATABASE_URL: ${DATABASE_URL}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
+      STRIPE_CURRENCY_DEFAULT: ${STRIPE_CURRENCY_DEFAULT:-usd}
+      STRIPE_USD_SECRET_KEY: ${STRIPE_USD_SECRET_KEY}
+      STRIPE_USD_PUBLISHABLE_KEY: ${STRIPE_USD_PUBLISHABLE_KEY}
+      STRIPE_EUR_SECRET_KEY: ${STRIPE_EUR_SECRET_KEY}
+      STRIPE_EUR_PUBLISHABLE_KEY: ${STRIPE_EUR_PUBLISHABLE_KEY}
+      STRIPE_PAYMENT_MODE: ${STRIPE_PAYMENT_MODE:-checkout_session}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+
+volumes:
+  pg_data:

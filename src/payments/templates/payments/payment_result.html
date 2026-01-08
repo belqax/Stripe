@@ -1,0 +1,13 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Payment {{ status }}</title>
+  </head>
+  <body>
+    {% if status == "success" %}
+      <h1>Payment success</h1>
+    {% else %}
+      <h1>Payment canceled</h1>
+    {% endif %}
+  </body>
+</html>

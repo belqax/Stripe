@@ -1,0 +1,47 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Buy {{ item.name }}</title>
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+  <body>
+    <h1>{{ item.name }}</h1>
+    <p>{{ item.description }}</p>
+    <p>{{ item.currency|upper }} {{ item.price }}</p>
+
+    <button id="buy-button">Buy</button>
+
+    <script type="text/javascript">
+      const paymentMode = "{{ payment_mode }}";
+      const buyUrl = "/buy/{{ item.id }}/";
+      const stripe = Stripe("{{ stripe_publishable_key }}");
+
+      document.getElementById("buy-button").addEventListener("click", async () => {
+        const resp = await fetch(buyUrl, { method: "GET" });
+        if (!resp.ok) {
+          alert("Failed to create payment");
+          return;
+        }
+        const data = await resp.json();
+
+        if (paymentMode === "payment_intent") {
+          const clientSecret = data.client_secret;
+          const result = await stripe.confirmPayment({
+            clientSecret: clientSecret,
+            confirmParams: { return_url: "{{ request.build_absolute_uri }}/" }
+          });
+          if (result && result.error) {
+            alert(result.error.message || "Payment failed");
+          }
+          return;
+        }
+
+        const sessionId = data.id;
+        const r = await stripe.redirectToCheckout({ sessionId: sessionId });
+        if (r && r.error) {
+          alert(r.error.message || "Redirect failed");
+        }
+      });
+    </script>
+  </body>
+</html>
